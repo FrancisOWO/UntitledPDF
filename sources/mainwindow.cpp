@@ -95,8 +95,8 @@ void MainWindow::open(const QUrl &docLocation)
 {
     if (docLocation.isLocalFile()) {
         m_document->load(docLocation.toLocalFile());
-        // BUG: 应该显示文档名，而不是元数据中的 Title
-        const auto documentTitle = m_document->metaData(QPdfDocument::Title).toString();
+        // FIX: 窗口标题应该显示文件名，而不是 PDF 元数据中的 Title
+        const auto documentTitle = docLocation.fileName();
         setWindowTitle(!documentTitle.isEmpty() ? documentTitle : QStringLiteral("PDF Viewer"));
     } else {
         qCDebug(lcExample) << docLocation << "is not a valid local file";
