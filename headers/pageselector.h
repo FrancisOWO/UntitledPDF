@@ -53,14 +53,18 @@ public:
     explicit PageSelector(QWidget *parent = nullptr);
 
     void setPageNavigation(QPdfPageNavigation *pageNavigation);
+    void setPageNumberEdit(int page);
+    void setPageCountLabel(int pageCount);
 
 private slots:
     void onCurrentPageChanged(int page);
     void pageNumberEdited();
 
 private:
+    // Init inside setPageNavigation()
     QPdfPageNavigation *m_pageNavigation;
 
+    // Init inside PageSelector()
     QLineEdit *m_pageNumberEdit;
     QLabel *m_pageCountLabel;
     QToolButton *m_previousPageButton;

@@ -37,41 +37,38 @@
 #include "zoomselector.h"
 
 #include <QLineEdit>
+#include <QStringList>
 
 ZoomSelector::ZoomSelector(QWidget *parent)
     : QComboBox(parent)
 {
     setEditable(true);
 
-    addItem(QLatin1String("Fit Width"));
-    addItem(QLatin1String("Fit Page"));
-    addItem(QLatin1String("12%"));
-    addItem(QLatin1String("25%"));
-    addItem(QLatin1String("33%"));
-    addItem(QLatin1String("50%"));
-    addItem(QLatin1String("66%"));
-    addItem(QLatin1String("75%"));
-    addItem(QLatin1String("100%"));
-    addItem(QLatin1String("125%"));
-    addItem(QLatin1String("150%"));
-    addItem(QLatin1String("200%"));
-    addItem(QLatin1String("400%"));
+    QStringList itemList = {
+        "Fit Width", "Fit Page",
+        "12%", "25%", "33%", "50%", "66%", "75%",
+        "100%", "125%", "150%", "200%", "400%"
+    };
+    addItems(itemList);
+    m_defaultZoomIndex = 8; // 100%
 
-    connect(this, static_cast<void(QComboBox::*)(const QString &)>(&QComboBox::currentIndexChanged),
-            this, &ZoomSelector::onCurrentTextChanged);
-
-    connect(lineEdit(), &QLineEdit::editingFinished,
-            this, [this](){onCurrentTextChanged(lineEdit()->text()); });
+    connect(this, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+            this, &ZoomSelector::onCurrentIndexChanged);
 }
 
 void ZoomSelector::setZoomFactor(qreal zoomFactor)
 {
-    setCurrentText(QString::number(qRound(zoomFactor * 100)) + QLatin1String("%"));
+    setCurrentText(QString::fromLatin1("%1%").arg(qRound(zoomFactor * 100)));
 }
 
 void ZoomSelector::reset()
 {
-    setCurrentIndex(8); // 100%
+    setCurrentIndex(m_defaultZoomIndex); // 100%
+}
+
+void ZoomSelector::onCurrentIndexChanged(int index)
+{
+    onCurrentTextChanged(this->itemText(index));
 }
 
 void ZoomSelector::onCurrentTextChanged(const QString &text)
@@ -88,10 +85,10 @@ void ZoomSelector::onCurrentTextChanged(const QString &text)
 
         bool ok = false;
         const int zoomLevel = withoutPercent.toInt(&ok);
-        if (ok)
+        if (ok) {
             factor = zoomLevel / 100.0;
-
-        emit zoomModeChanged(QPdfView::CustomZoom);
-        emit zoomFactorChanged(factor);
+            emit zoomModeChanged(QPdfView::CustomZoom);
+            emit zoomFactorChanged(factor);
+        }
     }
 }

@@ -48,6 +48,7 @@ PageSelector::PageSelector(QWidget *parent)
 {
     QHBoxLayout *layout = new QHBoxLayout(this);
 
+    // UI: [<] 1 / n [>]
     m_previousPageButton = new QToolButton(this);
     m_previousPageButton->setText("<");
     m_previousPageButton->setEnabled(false);
@@ -56,7 +57,7 @@ PageSelector::PageSelector(QWidget *parent)
     m_pageNumberEdit->setAlignment(Qt::AlignRight);
 
     m_pageCountLabel = new QLabel(this);
-    m_pageCountLabel->setText("0");
+    setPageCountLabel(0);
 
     m_nextPageButton = new QToolButton(this);
     m_nextPageButton->setText(">");
@@ -72,22 +73,35 @@ void PageSelector::setPageNavigation(QPdfPageNavigation *pageNavigation)
 {
     m_pageNavigation = pageNavigation;
 
+    // prevPage
     connect(m_previousPageButton, &QToolButton::clicked, m_pageNavigation, &QPdfPageNavigation::goToPreviousPage);
     connect(m_pageNavigation, &QPdfPageNavigation::canGoToPreviousPageChanged, m_previousPageButton, &QToolButton::setEnabled);
 
-    connect(m_pageNavigation, &QPdfPageNavigation::currentPageChanged, this, &PageSelector::onCurrentPageChanged);
-    connect(m_pageNavigation, &QPdfPageNavigation::pageCountChanged, this, [this](int pageCount){
-        m_pageCountLabel->setText(QString::fromLatin1("/ %1").arg(pageCount));
-        // FIX: 打开新文件时，当前页码应该显示 1，而不是 0
-        onCurrentPageChanged(m_pageNavigation->currentPage());
-    });
-
-    connect(m_pageNumberEdit, &QLineEdit::editingFinished, this, &PageSelector::pageNumberEdited);
-
+    // nextPage
     connect(m_nextPageButton, &QToolButton::clicked, m_pageNavigation, &QPdfPageNavigation::goToNextPage);
     connect(m_pageNavigation, &QPdfPageNavigation::canGoToNextPageChanged, m_nextPageButton, &QToolButton::setEnabled);
 
+    // currentPage
+    connect(m_pageNavigation, &QPdfPageNavigation::currentPageChanged, this, &PageSelector::onCurrentPageChanged);
+    connect(m_pageNavigation, &QPdfPageNavigation::pageCountChanged, this, [this](int pageCount){
+        setPageCountLabel(pageCount);
+        // FIX: 打开新文件时，当前页码应该显示 1，而不是 0
+        onCurrentPageChanged(m_pageNavigation->currentPage());
+    });
+    connect(m_pageNumberEdit, &QLineEdit::editingFinished, this, &PageSelector::pageNumberEdited);
+
+    // Init current page
     onCurrentPageChanged(m_pageNavigation->currentPage());
+}
+
+void PageSelector::setPageNumberEdit(int page)
+{
+    m_pageNumberEdit->setText(QString::number(page));
+}
+
+void PageSelector::setPageCountLabel(int pageCount)
+{
+    m_pageCountLabel->setText(QString::fromLatin1("/ %1").arg(pageCount));
 }
 
 void PageSelector::onCurrentPageChanged(int page)
@@ -95,9 +109,9 @@ void PageSelector::onCurrentPageChanged(int page)
     // BUG: 打开新文件时，文件状态尚未变为 Ready，导致 pageCount 置 0，页码显示为 0 而不是 1
     // FIX: 新文件 Ready 后会触发 pageCountChanged，此时 pageCount 为正常页数，再次调用当前函数即可显示正常页码
     if (m_pageNavigation->pageCount() == 0)
-        m_pageNumberEdit->setText(QString::number(0));
+        setPageNumberEdit(0);
     else
-        m_pageNumberEdit->setText(QString::number(page + 1));
+        setPageNumberEdit(page + 1);
 }
 
 void PageSelector::pageNumberEdited()

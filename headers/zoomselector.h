@@ -56,7 +56,11 @@ signals:
     void zoomModeChanged(QPdfView::ZoomMode zoomMode);
     void zoomFactorChanged(qreal zoomFactor);
 
+private:
+    int m_defaultZoomIndex;
+
 private slots:
+    void onCurrentIndexChanged(int index);
     void onCurrentTextChanged(const QString &text);
 };
 

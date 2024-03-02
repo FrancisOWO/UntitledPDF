@@ -60,30 +60,34 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    // zoomSelector
     m_zoomSelector->setMaximumWidth(150);
     ui->mainToolBar->insertWidget(ui->actionZoom_In, m_zoomSelector);
-
-    m_pageSelector->setMaximumWidth(150);
-    ui->mainToolBar->addWidget(m_pageSelector);
-
-    m_pageSelector->setPageNavigation(ui->pdfView->pageNavigation());
 
     connect(m_zoomSelector, &ZoomSelector::zoomModeChanged, ui->pdfView, &QPdfView::setZoomMode);
     connect(m_zoomSelector, &ZoomSelector::zoomFactorChanged, ui->pdfView, &QPdfView::setZoomFactor);
     m_zoomSelector->reset();
 
+    // pageSelector
+    m_pageSelector->setMaximumWidth(150);
+    ui->mainToolBar->addWidget(m_pageSelector);
+
+    m_pageSelector->setPageNavigation(ui->pdfView->pageNavigation());
+
+    // bookmark
     QPdfBookmarkModel *bookmarkModel = new QPdfBookmarkModel(this);
     bookmarkModel->setDocument(m_document);
 
     ui->bookmarkView->setModel(bookmarkModel);
+    // Click bookmark -> Jump to page
     connect(ui->bookmarkView, SIGNAL(activated(QModelIndex)), this, SLOT(bookmarkSelected(QModelIndex)));
 
+    // tabWidget
     ui->tabWidget->setTabEnabled(1, false); // disable 'Pages' tab for now
 
+    // pdfView
     ui->pdfView->setDocument(m_document);
-
-    connect(ui->pdfView, &QPdfView::zoomFactorChanged,
-            m_zoomSelector, &ZoomSelector::setZoomFactor);
+    connect(ui->pdfView, &QPdfView::zoomFactorChanged, m_zoomSelector, &ZoomSelector::setZoomFactor);
 }
 
 MainWindow::~MainWindow()
