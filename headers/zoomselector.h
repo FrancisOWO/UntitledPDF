@@ -39,6 +39,7 @@
 
 #include <QComboBox>
 #include <QPdfView>
+#include <QStringList>
 
 class ZoomSelector : public QComboBox
 {
@@ -57,7 +58,13 @@ signals:
     void zoomFactorChanged(qreal zoomFactor);
 
 private:
+    QStringList m_itemList;
+
+    int m_undefinedZoomIndex;
     int m_defaultZoomIndex;
+
+    QString m_lastText;
+    qreal m_zoomFactor;
 
 private slots:
     void onCurrentIndexChanged(int index);
