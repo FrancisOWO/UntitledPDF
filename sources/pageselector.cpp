@@ -108,10 +108,7 @@ void PageSelector::onCurrentPageChanged(int page)
 {
     // BUG: 打开新文件时，文件状态尚未变为 Ready，导致 pageCount 置 0，页码显示为 0 而不是 1
     // FIX: 新文件 Ready 后会触发 pageCountChanged，此时 pageCount 为正常页数，再次调用当前函数即可显示正常页码
-    if (m_pageNavigation->pageCount() == 0)
-        setPageNumberEdit(0);
-    else
-        setPageNumberEdit(page + 1);
+    setPageNumberEdit((m_pageNavigation->pageCount() ? page+1 : 0));
 }
 
 void PageSelector::pageNumberEdited()
