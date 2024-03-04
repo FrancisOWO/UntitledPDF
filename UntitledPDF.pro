@@ -1,10 +1,17 @@
 QT += core gui widgets pdf pdfwidgets
 
-CONFIG += c++11
+CONFIG += c++17
 
 msvc:QMAKE_CXXFLAGS += /utf-8
 
 DEFINES += QT_DEPRECATED_WARNINGS
+
+# 3rdparty
+INCLUDEPATH += \
+    3rdparty/PoDoFo/include
+
+LIBS += \
+    -L"$${PWD}/3rdparty/PoDoFo/lib" -lpodofo
 
 INCLUDEPATH += \
     headers/

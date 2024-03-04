@@ -66,6 +66,8 @@ public slots:
 private slots:
     void bookmarkSelected(const QModelIndex &index);
 
+    void PoDoFoHelloworld();
+
     // action handlers
     void on_actionOpen_triggered();
     void on_actionQuit_triggered();
@@ -76,6 +78,8 @@ private slots:
     void on_actionPrevious_Page_triggered();
     void on_actionNext_Page_triggered();
     void on_actionContinuous_triggered();
+
+    void on_actionPoDoFo_Demo_triggered();
 
 private:
     Ui::MainWindow *ui;

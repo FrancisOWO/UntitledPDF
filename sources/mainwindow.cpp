@@ -47,6 +47,13 @@
 #include <QPdfPageNavigation>
 #include <QtMath>
 
+#include <QDir>
+#include <QDebug>
+
+#include <podofo/podofo.h>
+
+using namespace PoDoFo;
+
 const qreal zoomMultiplier = qSqrt(2.0);
 
 Q_LOGGING_CATEGORY(lcExample, "qt.examples.pdfviewer")
@@ -93,6 +100,50 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::PoDoFoHelloworld()
+{
+    QString outputfile = "helloworld.pdf";
+
+    PdfMemDocument document;
+    PdfPainter painter;
+
+    try {
+        // 创建 helloworld.pdf
+        auto& page = document.GetPages().CreatePage(PdfPage::CreateStandardPageSize(PdfPageSize::A4));
+        painter.SetCanvas(page);
+
+        PdfFont* font = document.GetFonts().SearchFont("Arial");
+
+        // font == nullptr 则使用默认字体
+        painter.TextState.SetFont(*font, 18);
+        painter.DrawText("ABCDEFGHIKLMNOPQRSTVXYZ", 56.69, page.GetRect().Height - 56.69);
+        painter.FinishDrawing();
+
+        document.Save(outputfile.toStdString());
+
+        // 打开 helloworld.pdf
+        auto reply = QMessageBox::question(
+            this, tr("Open output file"),
+            tr("PDF file helloworld.pdf created successfully.\n"
+               "Do you want to open it?"),
+            QMessageBox::Yes | QMessageBox::No);
+
+        if (reply == QMessageBox::Yes) {
+            QUrl toOpen = QUrl::fromLocalFile(QString("%1/%2").arg(QDir::currentPath(), outputfile));
+            open(toOpen);
+        }
+    }
+    catch (PdfError& e) {
+        try {
+            painter.FinishDrawing();
+        }
+        catch (...) {
+
+        }
+        throw e;
+    }
 }
 
 void MainWindow::open(const QUrl &docLocation)
@@ -164,4 +215,9 @@ void MainWindow::on_actionNext_Page_triggered()
 void MainWindow::on_actionContinuous_triggered()
 {
     ui->pdfView->setPageMode(ui->actionContinuous->isChecked() ? QPdfView::MultiPage : QPdfView::SinglePage);
+}
+
+void MainWindow::on_actionPoDoFo_Demo_triggered()
+{
+    PoDoFoHelloworld();
 }

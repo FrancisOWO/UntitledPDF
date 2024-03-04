@@ -134,7 +134,7 @@
      <x>0</x>
      <y>0</y>
      <width>700</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -162,9 +162,16 @@
     <addaction name="separator"/>
     <addaction name="actionContinuous"/>
    </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="actionPoDoFo_Demo"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
    <addaction name="menuHelp"/>
+   <addaction name="menuTools"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <property name="movable">
@@ -262,6 +269,16 @@
    </property>
    <property name="text">
     <string>Continuous</string>
+   </property>
+  </action>
+  <action name="actionPoDoFo_Demo">
+   <property name="text">
+    <string>PoDoFo Demo</string>
+   </property>
+  </action>
+  <action name="actionTest">
+   <property name="text">
+    <string>Test</string>
    </property>
   </action>
  </widget>
