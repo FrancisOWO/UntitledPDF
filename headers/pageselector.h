@@ -56,8 +56,11 @@ public:
     void setPageNumberEdit(int page);
     void setPageCountLabel(int pageCount);
 
+    int getPageNumber();
+
 private slots:
     void onCurrentPageChanged(int page);
+    void onCurrentPageChanged();
     void pageNumberEdited();
 
 private:

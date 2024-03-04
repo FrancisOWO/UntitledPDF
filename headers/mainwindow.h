@@ -39,12 +39,16 @@
 
 #include <QLoggingCategory>
 #include <QMainWindow>
+#include <QUrl>
+#include <QVector>
 
 Q_DECLARE_LOGGING_CATEGORY(lcExample)
 
 namespace Ui {
 class MainWindow;
 }
+
+class QTextEdit;
 
 class QPdfDocument;
 class QPdfView;
@@ -68,6 +72,8 @@ private slots:
 
     void PoDoFoHelloworld();
 
+    void loadEditablePDF();
+
     // action handlers
     void on_actionOpen_triggered();
     void on_actionQuit_triggered();
@@ -81,12 +87,19 @@ private slots:
 
     void on_actionPoDoFo_Demo_triggered();
 
+    void on_tabWidgetTools_currentChanged(int index);
+
 private:
     Ui::MainWindow *ui;
     ZoomSelector *m_zoomSelector;
     PageSelector *m_pageSelector;
 
     QPdfDocument *m_document;
+    QUrl m_docLocation;
+
+    QVector<QTextEdit *> m_textEdits;
+
+    int Pt2Px(double pt);
 };
 
 #endif // MAINWINDOW_H

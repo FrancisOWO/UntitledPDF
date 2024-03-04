@@ -47,6 +47,14 @@
 #include <QPdfPageNavigation>
 #include <QtMath>
 
+#include <QScreen>
+
+#include <QTextEdit>
+#include <QTextDocument>
+#include <QTextCharFormat>
+#include <QFont>
+#include <QScrollBar>
+
 #include <QDir>
 #include <QDebug>
 
@@ -102,6 +110,13 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+int MainWindow::Pt2Px(double pt)
+{
+    // default dpi: 96
+    double dpi = this->screen()->logicalDotsPerInch();
+    return pt/72*dpi;
+}
+
 void MainWindow::PoDoFoHelloworld()
 {
     QString outputfile = "helloworld.pdf";
@@ -114,11 +129,21 @@ void MainWindow::PoDoFoHelloworld()
         auto& page = document.GetPages().CreatePage(PdfPage::CreateStandardPageSize(PdfPageSize::A4));
         painter.SetCanvas(page);
 
-        PdfFont* font = document.GetFonts().SearchFont("Arial");
+        QString fontName = "Arial";
+        PdfFont* font = document.GetFonts().SearchFont(fontName.toStdString());
 
         // font == nullptr 则使用默认字体
         painter.TextState.SetFont(*font, 18);
         painter.DrawText("ABCDEFGHIKLMNOPQRSTVXYZ", 56.69, page.GetRect().Height - 56.69);
+
+        try {
+            painter.DrawText("АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЬЫЭЮЯ", 56.69, page.GetRect().Height - 80);
+        }
+        catch (PdfError& e) {
+            if (e.GetCode() == PdfErrorCode::InvalidFontData)
+                qDebug() << "WARNING: The matched font" << fontName << "doesn't support cyrillic";
+        }
+
         painter.FinishDrawing();
 
         document.Save(outputfile.toStdString());
@@ -146,9 +171,92 @@ void MainWindow::PoDoFoHelloworld()
     }
 }
 
+void MainWindow::loadEditablePDF()
+{
+    qDebug() << "loadEditablePDF() >> dpi:" << this->screen()->logicalDotsPerInch();
+    if (m_docLocation.isLocalFile()) {
+        PdfMemDocument document;
+        try {
+            qDebug() << m_docLocation.toLocalFile();
+            document.Load(m_docLocation.toLocalFile().toStdString());
+
+            // TODO: 目前编辑状态只显示第一页，未实现页面切换
+            // pageIndex = pageNumber - 1
+            auto& page = document.GetPages().GetPageAt(m_pageSelector->getPageNumber()-1);
+
+            std::vector<PdfTextEntry> entries;
+            page.ExtractTextTo(entries);
+            qDebug() << "ExtractTextTo()";
+
+            for (auto& entry : entries) {
+                qDebug() << QString("(%1,%2) %3 %4")
+                                .arg(QString::number(entry.X), QString::number(entry.Y),
+                                     QString::number(entry.Length),
+                                     QString::fromStdString(entry.Text.data()));
+
+                QTextEdit *textEdit = new QTextEdit();
+                textEdit->setParent(ui->pdfEditor);
+
+                // 设置字体格式
+                QTextCharFormat fmt;
+                fmt.setFont(QFont("Arial", 18));
+                textEdit->setCurrentCharFormat(fmt);
+                textEdit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+                textEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+                // 转换成像素位置，显示在编辑区域
+                // TODO: Pt2Px 计算的位置不够准确
+                QFontMetrics fm(textEdit->currentFont());
+                int x = Pt2Px(entry.X), y = Pt2Px(page.GetRect().Height-entry.Y);
+                int width = fm.horizontalAdvance(entry.Text.data()), height = fm.height();
+                const int horizontalMargin = 15, verticalMargin = 12;
+                textEdit->setGeometry({x, y, width+horizontalMargin, height+verticalMargin});
+                qDebug() << "Rect:" << x << "," << y << "," << width << "," << height;
+
+                textEdit->append(entry.Text.data());
+                textEdit->show();
+                qDebug() << "Content size:" << textEdit->document()->size();
+
+                // 文本框大小自适应，宽度高度随着内容改变
+                connect(textEdit, &QTextEdit::textChanged, textEdit, [=](){
+                    // 计算最长的一行文本宽度（单位：像素）
+                    QString text = textEdit->toPlainText();
+                    int maxWidth = 0, lastIndex = 0, lineCount = 1;
+                    QFontMetrics fm(textEdit->currentFont());
+                    for (int i=0; i<text.length(); i++) {
+                        if (text[i] != '\n')
+                            continue;
+                        // 根据 font 计算文本宽度
+                        int width = fm.horizontalAdvance(text.mid(lastIndex, i-lastIndex));
+                        if (width > maxWidth)
+                            maxWidth = width;
+                        lastIndex = i;
+                        lineCount++;
+                    }
+                    int width = fm.horizontalAdvance(text.right(text.length()-lastIndex));
+                    if (width > maxWidth)
+                        maxWidth = width;
+
+                    textEdit->resize({maxWidth+horizontalMargin, fm.height()*lineCount+verticalMargin});
+                });
+
+                m_textEdits.append(textEdit);
+            }
+        }
+        catch (PdfError& e) {
+            throw e;
+        }
+
+    } else {
+        qCDebug(lcExample) << m_docLocation << "is not a valid local file";
+        // QMessageBox::critical(this, tr("Failed to open"), tr("%1 is not a valid local file").arg(m_docLocation.toString()));
+    }
+}
+
 void MainWindow::open(const QUrl &docLocation)
 {
     if (docLocation.isLocalFile()) {
+        m_docLocation = docLocation;
         m_document->load(docLocation.toLocalFile());
         // FIX: 窗口标题应该显示文件名，而不是 PDF 元数据中的 Title
         const auto documentTitle = docLocation.fileName();
@@ -221,3 +329,15 @@ void MainWindow::on_actionPoDoFo_Demo_triggered()
 {
     PoDoFoHelloworld();
 }
+
+void MainWindow::on_tabWidgetTools_currentChanged(int index)
+{
+    if (ui->tabWidgetTools->currentWidget() == ui->editTab) {
+        qDebug() << "Mode: Edit";
+        loadEditablePDF();
+    }
+    else {
+        qDebug() << "Mode: View";
+    }
+}
+
