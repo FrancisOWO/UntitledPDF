@@ -49,6 +49,7 @@ class MainWindow;
 }
 
 class QTextEdit;
+class QPlainTextEdit;
 
 class QPdfDocument;
 class QPdfView;

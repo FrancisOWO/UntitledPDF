@@ -1,13 +1,60 @@
 #include "tools.h"
 
 #include <QDebug>
-#include <podofo/podofo.h>
 
 using namespace PoDoFo;
 using namespace std;
 
 const char* GetBase14FontName(unsigned i);
 void DemoBase14Fonts(PdfPainter& painter, PdfPage& page, PdfDocument& document);
+
+void getAvailableFont(const QString& baseFontName, QString& fontName, QFont::StyleHint& hint,
+                      QFont::Style& style, QFont::Weight& weight)
+{
+    // e.g. baseFontName: "Times",   fontName: "Times-BoldItalic"
+    //      baseFontName: "ArialMT", fontName: "BAAAAA+ArialMT"
+    // 注："BAAAAA+" 表示使用了字体的子集，生成 ID 加以区分
+    QString fontStyle;
+    if (baseFontName != fontName.right(baseFontName.size())) {
+        fontStyle = fontName.right(fontName.size() - baseFontName.size() - 1);
+    }
+
+    // 粗体和斜体
+    if (!fontStyle.isEmpty()) {
+        // 粗体
+        if (fontStyle.left(4) == "Bold") {  // Bold, BoldItalic, BoldOblique
+            weight = QFont::Bold;
+            fontStyle = fontStyle.right(fontStyle.size()-4);
+        }
+        // 斜体
+        if (fontStyle == "Italic") {
+            style = QFont::StyleItalic;
+        }
+        else if (fontStyle == "Oblique") {
+            style = QFont::StyleOblique;
+        }
+    }
+
+    // 字体名称
+    if (baseFontName == "Times-Roman" || baseFontName == "Times") {
+        fontName = "Times New Roman";
+        hint = QFont::Times;
+    }
+    else if (baseFontName == "Helvetica") {
+        fontName = "Helvetica";
+        hint = QFont::Helvetica;
+    }
+    else if (baseFontName == "Courier") {
+        fontName = "Courier";
+        hint = QFont::Courier;
+    }
+    else if (baseFontName == "ArialMT") {
+        fontName = "Arial";
+    }
+
+
+
+}
 
 void PoDoFoHelloworld(std::string outputfile)
 {
@@ -82,8 +129,72 @@ void PoDoFoBase14Fonts(std::string outputfile)
     }
 }
 
-static const char* s_base14fonts[] =
-    {
+void UPdfExtractTextStates(PdfPage& page, vector<UPdfTextState>& textStates)
+{
+    try {
+        PdfContentStreamReader reader(page);
+        PdfContent content;
+        UPdfTextState currentState;
+
+        while (reader.TryReadNext(content)) {
+            while (reader.TryReadNext(content)) {
+                switch (content.Type) {
+                case PdfContentType::Operator: {
+                    // 运算符不合法则忽略，继续解析
+                    if ((content.Warnings & PdfContentWarnings::InvalidOperator)
+                        != PdfContentWarnings::None) {
+                        continue;
+                    }
+                    switch (content.Operator) {
+                    case PdfOperator::TL:
+                    case PdfOperator::cm:
+                    case PdfOperator::Td:
+                    case PdfOperator::TD:
+                    case PdfOperator::Tm:
+                    case PdfOperator::T_Star:
+                    case PdfOperator::BT:
+                    case PdfOperator::ET: {
+                        break;
+                    }
+                    case PdfOperator::Tf: {     // 设置字体
+                        currentState.fontSize = content.Stack[0].GetReal();
+                        auto& fontName = content.Stack[1].GetName();
+                        currentState.font = page.GetResources()->GetFont(fontName);
+                        break;
+                    }
+                    case PdfOperator::Tj: {     // 显示当前文本
+                        // TODO: 文本与状态检查
+                        textStates.push_back(currentState);
+                        break;
+                    }
+                    case PdfOperator::Quote:
+                    case PdfOperator::DoubleQuote:
+                    case PdfOperator::TJ:
+                    case PdfOperator::Tc:
+                    case PdfOperator::Tw:
+                    case PdfOperator::q:
+                    case PdfOperator::Q:
+                    default:
+                        break;
+                    }
+                    break;
+                }
+                case PdfContentType::ImageDictionary:
+                case PdfContentType::ImageData:
+                case PdfContentType::DoXObject:
+                case PdfContentType::EndXObjectForm:
+                default:
+                    break;
+                }
+            }
+        }
+    }
+    catch (...) {
+
+    }
+}
+
+static const char* s_base14fonts[] = {
         "Times-Roman",
         "Times-Italic",
         "Times-Bold",

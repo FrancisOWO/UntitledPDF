@@ -51,6 +51,7 @@
 #include <QScreen>
 
 #include <QTextEdit>
+#include <QPlainTextEdit>
 #include <QTextDocument>
 #include <QTextCharFormat>
 #include <QFont>
@@ -153,6 +154,13 @@ void MainWindow::PoDoFoDemo(int choice)
 void MainWindow::loadEditablePDF()
 {
     qDebug() << "loadEditablePDF() >> dpi:" << this->screen()->logicalDotsPerInch();
+    // TODO: 没有切换文件则无需重新解析，继续使用上一次的编辑框
+    // 清除上一次的编辑框
+    for (auto& textEdit : m_textEdits) {
+        textEdit->hide();
+        delete textEdit;
+    }
+    m_textEdits.clear();
     if (m_docLocation.isLocalFile()) {
         PdfMemDocument document;
         try {
@@ -163,23 +171,45 @@ void MainWindow::loadEditablePDF()
             // pageIndex = pageNumber - 1
             auto& page = document.GetPages().GetPageAt(m_pageSelector->getPageNumber()-1);
 
+            // 提取文本内容和位置
             std::vector<PdfTextEntry> entries;
             page.ExtractTextTo(entries);
-            qDebug() << "ExtractTextTo()";
 
-            for (auto& entry : entries) {
+            // 提取文本字体状态
+            std::vector<UPdfTextState> textStates;
+            UPdfExtractTextStates(page, textStates);
+
+            for (int i=0; i<entries.size(); i++) {
+                auto& entry = entries[i];
+                auto& currentState = textStates[i];
+
                 qDebug() << QString("(%1,%2) %3 %4")
                                 .arg(QString::number(entry.X), QString::number(entry.Y),
                                      QString::number(entry.Length),
                                      QString::fromStdString(entry.Text.data()));
 
+                // 如：baseFontName="Times", fontName="Times-BoldItalic"
+                QString baseFontName = currentState.font->GetMetrics().GetBaseFontName().data();
+                QString fontName = currentState.font->GetMetrics().GetFontName().data();
+
+                qDebug() << "baseFontName:" << baseFontName << "fontName:" << fontName
+                         << "fontSize:" << currentState.fontSize;
+
                 QTextEdit *textEdit = new QTextEdit();
                 textEdit->setParent(ui->pdfEditor);
 
                 // 设置字体格式
-                QTextCharFormat fmt;
-                fmt.setFont(QFont("Arial", 18));
-                textEdit->setCurrentCharFormat(fmt);
+                QFont::StyleHint fontHint = QFont::System;
+                QFont::Style fontStyle = QFont::StyleNormal;
+                QFont::Weight fontWeight = QFont::Weight::Normal;
+                getAvailableFont(baseFontName, fontName, fontHint, fontStyle, fontWeight);
+
+                QFont currentFont(fontName, currentState.fontSize);
+                currentFont.setStyle(fontStyle);
+                currentFont.setWeight(fontWeight);
+
+                // BUG: QTextEdit 无法自动使用 QFont 设置的斜体和粗体
+                textEdit->setCurrentFont(currentFont);
                 textEdit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
                 textEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
