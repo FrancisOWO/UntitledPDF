@@ -20,11 +20,13 @@ SOURCES += \
     sources/main.cpp \
     sources/mainwindow.cpp \
     sources/pageselector.cpp \
+    sources/tools.cpp \
     sources/zoomselector.cpp
 
 HEADERS += \
     headers/mainwindow.h \
     headers/pageselector.h \
+    headers/tools.h \
     headers/zoomselector.h
 
 FORMS += \

@@ -243,16 +243,17 @@
     <addaction name="separator"/>
     <addaction name="actionContinuous"/>
    </widget>
-   <widget class="QMenu" name="menuTools">
+   <widget class="QMenu" name="menuDemo">
     <property name="title">
-     <string>Tools</string>
+     <string>Demo</string>
     </property>
-    <addaction name="actionPoDoFo_Demo"/>
+    <addaction name="actionPoDoFo_Helloworld"/>
+    <addaction name="actionPoDoFo_Base14Fonts"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
    <addaction name="menuHelp"/>
-   <addaction name="menuTools"/>
+   <addaction name="menuDemo"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <property name="movable">
@@ -352,9 +353,9 @@
     <string>Continuous</string>
    </property>
   </action>
-  <action name="actionPoDoFo_Demo">
+  <action name="actionPoDoFo_Helloworld">
    <property name="text">
-    <string>PoDoFo Demo</string>
+    <string>PoDoFo Helloworld</string>
    </property>
   </action>
   <action name="actionTest">
@@ -365,6 +366,11 @@
   <action name="actionEdit">
    <property name="text">
     <string>Edit</string>
+   </property>
+  </action>
+  <action name="actionPoDoFo_Base14Fonts">
+   <property name="text">
+    <string>PoDoFo Base14Fonts</string>
    </property>
   </action>
  </widget>

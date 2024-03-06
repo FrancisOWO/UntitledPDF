@@ -70,7 +70,7 @@ public slots:
 private slots:
     void bookmarkSelected(const QModelIndex &index);
 
-    void PoDoFoHelloworld();
+    void PoDoFoDemo(int choice);
 
     void loadEditablePDF();
 
@@ -85,7 +85,8 @@ private slots:
     void on_actionNext_Page_triggered();
     void on_actionContinuous_triggered();
 
-    void on_actionPoDoFo_Demo_triggered();
+    void on_actionPoDoFo_Helloworld_triggered();
+    void on_actionPoDoFo_Base14Fonts_triggered();
 
     void on_tabWidgetTools_currentChanged(int index);
 
@@ -98,6 +99,9 @@ private:
     QUrl m_docLocation;
 
     QVector<QTextEdit *> m_textEdits;
+
+    static const int DEMO_HELLOWORLD = 0;
+    static const int DEMO_BASE14FONTS = 1;
 
     int Pt2Px(double pt);
 };

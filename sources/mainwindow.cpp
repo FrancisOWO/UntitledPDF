@@ -39,6 +39,7 @@
 
 #include "pageselector.h"
 #include "zoomselector.h"
+#include "tools.h"
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -117,37 +118,21 @@ int MainWindow::Pt2Px(double pt)
     return pt/72*dpi;
 }
 
-void MainWindow::PoDoFoHelloworld()
+void MainWindow::PoDoFoDemo(int choice)
 {
-    QString outputfile = "helloworld.pdf";
-
-    PdfMemDocument document;
-    PdfPainter painter;
-
     try {
         // 创建 helloworld.pdf
-        auto& page = document.GetPages().CreatePage(PdfPage::CreateStandardPageSize(PdfPageSize::A4));
-        painter.SetCanvas(page);
-
-        QString fontName = "Arial";
-        PdfFont* font = document.GetFonts().SearchFont(fontName.toStdString());
-
-        // font == nullptr 则使用默认字体
-        painter.TextState.SetFont(*font, 18);
-        painter.DrawText("ABCDEFGHIKLMNOPQRSTVXYZ", 56.69, page.GetRect().Height - 56.69);
-
-        try {
-            painter.DrawText("АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЬЫЭЮЯ", 56.69, page.GetRect().Height - 80);
+        QString outputfile;
+        if (choice == DEMO_HELLOWORLD) {
+            outputfile = "helloworld.pdf";
+            PoDoFoHelloworld(outputfile.toStdString());
+        } else if (choice == DEMO_BASE14FONTS) {
+            outputfile = "helloworld-base14.pdf";
+            PoDoFoBase14Fonts(outputfile.toStdString());
+        } else {
+            // 没有对应的 Demo
+            return;
         }
-        catch (PdfError& e) {
-            if (e.GetCode() == PdfErrorCode::InvalidFontData)
-                qDebug() << "WARNING: The matched font" << fontName << "doesn't support cyrillic";
-        }
-
-        painter.FinishDrawing();
-
-        document.Save(outputfile.toStdString());
-
         // 打开 helloworld.pdf
         auto reply = QMessageBox::question(
             this, tr("Open output file"),
@@ -160,14 +145,8 @@ void MainWindow::PoDoFoHelloworld()
             open(toOpen);
         }
     }
-    catch (PdfError& e) {
-        try {
-            painter.FinishDrawing();
-        }
-        catch (...) {
+    catch (...) {
 
-        }
-        throw e;
     }
 }
 
@@ -325,9 +304,14 @@ void MainWindow::on_actionContinuous_triggered()
     ui->pdfView->setPageMode(ui->actionContinuous->isChecked() ? QPdfView::MultiPage : QPdfView::SinglePage);
 }
 
-void MainWindow::on_actionPoDoFo_Demo_triggered()
+void MainWindow::on_actionPoDoFo_Helloworld_triggered()
 {
-    PoDoFoHelloworld();
+    PoDoFoDemo(DEMO_HELLOWORLD);
+}
+
+void MainWindow::on_actionPoDoFo_Base14Fonts_triggered()
+{
+    PoDoFoDemo(DEMO_BASE14FONTS);
 }
 
 void MainWindow::on_tabWidgetTools_currentChanged(int index)
