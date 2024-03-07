@@ -13,11 +13,11 @@ void getAvailableFont(const QString& baseFontName, QString& fontName, QFont::Sty
 {
     // e.g. baseFontName: "Times",   fontName: "Times-BoldItalic"
     //      baseFontName: "ArialMT", fontName: "BAAAAA+ArialMT"
-    // 注："BAAAAA+" 表示使用了字体的子集，生成 ID 加以区分
-    QString fontStyle;
-    if (baseFontName != fontName.right(baseFontName.size())) {
-        fontStyle = fontName.right(fontName.size() - baseFontName.size() - 1);
-    }
+    // 注："BAAAAA+" 表示使用了字体的子集，生成 ID 加以区分    
+    // fontName: subsetID+baseFontName-fontStyle
+    // 根据 '-' 判断是否存在 fontStyle，存在则截取
+    int index = fontName.lastIndexOf('-');
+    QString fontStyle = (index >= 0 ? fontName.right(fontName.size()-index-1) : "");
 
     // 粗体和斜体
     if (!fontStyle.isEmpty()) {
@@ -48,11 +48,16 @@ void getAvailableFont(const QString& baseFontName, QString& fontName, QFont::Sty
         fontName = "Courier";
         hint = QFont::Courier;
     }
+    else if (baseFontName == "Symbol") {
+        // BUG: 其他常规字体能正常显示 "♠♣♥♦"，而 Symbol 字体不能，暂时用其他字体代替
+        fontName = "Arial";
+    }
     else if (baseFontName == "ArialMT") {
         fontName = "Arial";
     }
-
-
+    else {
+        fontName = baseFontName;
+    }
 
 }
 

@@ -185,10 +185,9 @@ void MainWindow::loadEditablePDF()
 
                 qDebug() << QString("(%1,%2) %3 %4")
                                 .arg(QString::number(entry.X), QString::number(entry.Y),
-                                     QString::number(entry.Length),
-                                     QString::fromStdString(entry.Text.data()));
+                                     QString::number(entry.Length), entry.Text.data());
 
-                // 如：baseFontName="Times", fontName="Times-BoldItalic"
+                // e.g. baseFontName: "Times", fontName: "Times-BoldItalic"
                 QString baseFontName = currentState.font->GetMetrics().GetBaseFontName().data();
                 QString fontName = currentState.font->GetMetrics().GetFontName().data();
 
@@ -207,8 +206,8 @@ void MainWindow::loadEditablePDF()
                 QFont currentFont(fontName, currentState.fontSize);
                 currentFont.setStyle(fontStyle);
                 currentFont.setWeight(fontWeight);
+                currentFont.setStyleHint(fontHint);
 
-                // BUG: QTextEdit 无法自动使用 QFont 设置的斜体和粗体
                 textEdit->setCurrentFont(currentFont);
                 textEdit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
                 textEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
