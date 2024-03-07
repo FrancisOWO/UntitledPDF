@@ -126,6 +126,7 @@ void PoDoFoHelloworld(std::string outputfile)
         catch (...) {
 
         }
+        e.PrintErrorMsg();
         throw e;
     }
 }
@@ -160,6 +161,7 @@ void PoDoFoBase14Fonts(std::string outputfile)
         catch (...) {
 
         }
+        e.PrintErrorMsg();
         throw e;
     }
 }

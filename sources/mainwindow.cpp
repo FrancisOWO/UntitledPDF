@@ -278,7 +278,10 @@ void MainWindow::loadEditablePDF()
             }
         }
         catch (PdfError& e) {
-            throw e;
+            // TODO: 目前不支持解析没有 xref 的 PDF，后续可以加入 xref 补全
+            e.PrintErrorMsg();
+            QString msg = QString::fromStdString(std::string(e.ErrorMessage(e.GetCode())));
+            QMessageBox::critical(this, tr("Failed to open"), msg);
         }
 
     } else {
