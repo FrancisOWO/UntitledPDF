@@ -201,7 +201,7 @@ void MainWindow::loadEditablePDF()
                 QFont::StyleHint fontHint = QFont::System;
                 QFont::Style fontStyle = QFont::StyleNormal;
                 QFont::Weight fontWeight = QFont::Weight::Normal;
-                getAvailableFont(baseFontName, fontName, fontHint, fontStyle, fontWeight);
+                PdfFont2QFont(baseFontName, fontName, fontHint, fontStyle, fontWeight);
 
                 QFont currentFont(fontName, currentState.fontSize);
                 currentFont.setStyle(fontStyle);
@@ -248,6 +248,9 @@ void MainWindow::loadEditablePDF()
                     textEdit->resize({maxWidth+horizontalMargin, fm.height()*lineCount+verticalMargin});
                 });
 
+                // 记录文本原始坐标
+                m_textPositions.append({entry.X, entry.Y});
+                // 保存文本框指针
                 m_textEdits.append(textEdit);
             }
         }
@@ -268,12 +271,15 @@ void MainWindow::open(const QUrl &docLocation)
         m_document->load(docLocation.toLocalFile());
         // FIX: 窗口标题应该显示文件名，而不是 PDF 元数据中的 Title
         const auto documentTitle = docLocation.fileName();
-        setWindowTitle(!documentTitle.isEmpty() ? documentTitle : QStringLiteral("PDF Viewer"));
+        setWindowTitle(!documentTitle.isEmpty() ? documentTitle : QStringLiteral("UntitledPDF"));
     } else {
         qCDebug(lcExample) << docLocation << "is not a valid local file";
         QMessageBox::critical(this, tr("Failed to open"), tr("%1 is not a valid local file").arg(docLocation.toString()));
     }
     qCDebug(lcExample) << docLocation;
+
+    // 切换到阅读模式
+    ui->tabWidgetTools->setCurrentWidget(ui->viewTab);
 }
 
 void MainWindow::bookmarkSelected(const QModelIndex &index)
@@ -297,10 +303,57 @@ void MainWindow::on_actionQuit_triggered()
     QApplication::quit();
 }
 
+void MainWindow::on_actionSave_As_triggered()
+{
+    // 指定保存文件路径
+    QUrl toSave = QFileDialog::getSaveFileUrl(this, tr("Save a PDF"), QUrl(), "Portable Documents (*.pdf)");
+    QString outputfile = toSave.toLocalFile();
+    qDebug() << "outputfile:" << outputfile;
+
+    PdfMemDocument document;
+    PdfPainter painter;
+
+    // TODO: 目前只支持单页编辑保存，多页编辑保存待实现
+    auto& page = document.GetPages().CreatePage(PdfPage::CreateStandardPageSize(PdfPageSize::A4));
+    painter.SetCanvas(page);
+
+    // 依次将每个文本框的内容写入 PDF 页面
+    for (int i=0; i<m_textEdits.size(); i++) {
+        auto& textEdit = m_textEdits[i];
+        auto& pos = m_textPositions[i];
+
+        // 获取字体
+        QString fontName;
+        QFont qfont = textEdit->currentFont();
+        QFont2PdfFont(qfont, fontName);
+
+        PdfFontSearchParams params;
+        params.AutoSelect = PdfFontAutoSelectBehavior::Standard14;
+        PdfFont* font = document.GetFonts().SearchFont(fontName.toStdString(), params);
+        qDebug() << "fontName:" << fontName;
+
+        painter.TextState.SetFont(*font, qfont.pointSize());
+        painter.DrawText(textEdit->toPlainText().toStdString(), pos.x(), pos.y());
+    }
+    painter.FinishDrawing();
+    document.Save(outputfile.toStdString());
+
+    // 打开保存的文件
+    auto reply = QMessageBox::question(
+        this, tr("Open output file"),
+        tr("PDF file saved successfully.\n"
+           "Do you want to open it?"),
+        QMessageBox::Yes | QMessageBox::No);
+
+    if (reply == QMessageBox::Yes) {
+        open(toSave);
+    }
+}
+
 void MainWindow::on_actionAbout_triggered()
 {
-    QMessageBox::about(this, tr("About PdfViewer"),
-        tr("An example using QPdfDocument"));
+    QMessageBox::about(this, tr("About UntitledPDF"),
+        tr("A PDF Editor full of unknown"));
 }
 
 void MainWindow::on_actionAbout_Qt_triggered()

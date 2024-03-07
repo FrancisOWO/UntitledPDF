@@ -75,17 +75,20 @@ private slots:
 
     void loadEditablePDF();
 
-    // action handlers
+    // File Menu
     void on_actionOpen_triggered();
     void on_actionQuit_triggered();
+    void on_actionSave_As_triggered();
+    // Help Menu
     void on_actionAbout_triggered();
     void on_actionAbout_Qt_triggered();
+    // View Menu
     void on_actionZoom_In_triggered();
     void on_actionZoom_Out_triggered();
     void on_actionPrevious_Page_triggered();
     void on_actionNext_Page_triggered();
     void on_actionContinuous_triggered();
-
+    // Demo Menu
     void on_actionPoDoFo_Helloworld_triggered();
     void on_actionPoDoFo_Base14Fonts_triggered();
 
@@ -100,6 +103,8 @@ private:
     QUrl m_docLocation;
 
     QVector<QTextEdit *> m_textEdits;
+    // pt=>px 的转换不够精确，需记录原始坐标
+    QVector<QPointF> m_textPositions;
 
     static const int DEMO_HELLOWORLD = 0;
     static const int DEMO_BASE14FONTS = 1;

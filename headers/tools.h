@@ -16,8 +16,9 @@ struct UPdfTextState {
     double wordSpacing = 0;
 };
 
-void getAvailableFont(const QString& baseFontName, QString& fontName, QFont::StyleHint& hint,
-                      QFont::Style& style, QFont::Weight& weight);
+void PdfFont2QFont(const QString& baseFontName, QString& to_fontName, QFont::StyleHint& to_hint,
+                   QFont::Style& to_style, QFont::Weight& to_weight);
+void QFont2PdfFont(const QFont& font, QString& to_fontName);
 
 void PoDoFoHelloworld(std::string outputfile);
 void PoDoFoBase14Fonts(std::string outputfile);

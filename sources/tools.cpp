@@ -8,57 +8,86 @@ using namespace std;
 const char* GetBase14FontName(unsigned i);
 void DemoBase14Fonts(PdfPainter& painter, PdfPage& page, PdfDocument& document);
 
-void getAvailableFont(const QString& baseFontName, QString& fontName, QFont::StyleHint& hint,
-                      QFont::Style& style, QFont::Weight& weight)
+void PdfFont2QFont(const QString& baseFontName, QString& to_fontName, QFont::StyleHint& to_hint,
+                   QFont::Style& to_style, QFont::Weight& to_weight)
 {
     // e.g. baseFontName: "Times",   fontName: "Times-BoldItalic"
     //      baseFontName: "ArialMT", fontName: "BAAAAA+ArialMT"
     // 注："BAAAAA+" 表示使用了字体的子集，生成 ID 加以区分    
     // fontName: subsetID+baseFontName-fontStyle
     // 根据 '-' 判断是否存在 fontStyle，存在则截取
-    int index = fontName.lastIndexOf('-');
-    QString fontStyle = (index >= 0 ? fontName.right(fontName.size()-index-1) : "");
+    int index = to_fontName.lastIndexOf('-');
+    QString fontStyle = (index >= 0 ? to_fontName.right(to_fontName.size()-index-1) : "");
 
     // 粗体和斜体
     if (!fontStyle.isEmpty()) {
         // 粗体
         if (fontStyle.left(4) == "Bold") {  // Bold, BoldItalic, BoldOblique
-            weight = QFont::Bold;
+            to_weight = QFont::Bold;
             fontStyle = fontStyle.right(fontStyle.size()-4);
         }
         // 斜体
         if (fontStyle == "Italic") {
-            style = QFont::StyleItalic;
+            to_style = QFont::StyleItalic;
         }
         else if (fontStyle == "Oblique") {
-            style = QFont::StyleOblique;
+            to_style = QFont::StyleOblique;
         }
     }
 
     // 字体名称
     if (baseFontName == "Times-Roman" || baseFontName == "Times") {
-        fontName = "Times New Roman";
-        hint = QFont::Times;
+        to_fontName = "Times";
+        to_hint = QFont::Times;
     }
     else if (baseFontName == "Helvetica") {
-        fontName = "Helvetica";
-        hint = QFont::Helvetica;
+        to_fontName = "Helvetica";
+        to_hint = QFont::Helvetica;
     }
     else if (baseFontName == "Courier") {
-        fontName = "Courier";
-        hint = QFont::Courier;
+        to_fontName = "Courier";
+        to_hint = QFont::Courier;
     }
     else if (baseFontName == "Symbol") {
         // BUG: 其他常规字体能正常显示 "♠♣♥♦"，而 Symbol 字体不能，暂时用其他字体代替
-        fontName = "Arial";
+        to_fontName = "Arial";
     }
     else if (baseFontName == "ArialMT") {
-        fontName = "Arial";
+        to_fontName = "Arial";
     }
     else {
-        fontName = baseFontName;
+        to_fontName = baseFontName;
     }
 
+}
+
+void QFont2PdfFont(const QFont& font, QString& to_fontName)
+{
+    to_fontName = font.family();
+    if (font.weight() != QFont::Weight::Normal || font.style() != QFont::StyleNormal) {
+        to_fontName += "-";
+    }
+    else {
+        if (font.family() == "Times") {
+            to_fontName = "Times-Roman";
+        }
+    }
+
+    if (font.weight() == QFont::Bold) {
+        to_fontName += "Bold";
+    }
+    if (font.style() == QFont::StyleOblique) {
+        to_fontName += "Oblique";
+    }
+    else if (font.style() == QFont::StyleItalic) {
+        // BUG: 某些字体设置的 StyleOblique 变成了 StyleItalic，需特殊处理
+        if (font.family() == "Helvetica" || font.family() == "Courier") {
+            to_fontName += "Oblique";
+        }
+        else {
+            to_fontName += "Italic";
+        }
+    }
 }
 
 void PoDoFoHelloworld(std::string outputfile)
