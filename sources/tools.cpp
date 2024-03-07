@@ -105,6 +105,7 @@ void PoDoFoHelloworld(std::string outputfile)
 
         // font == nullptr 则使用默认字体
         painter.TextState.SetFont(*font, 18);
+        // 注意：page.GetRect().Height 并不是最终页面的顶端，之后还会进行裁剪，TrimBox 才是最终页面的尺寸
         painter.DrawText("ABCDEFGHIKLMNOPQRSTVXYZ", 56.69, page.GetRect().Height - 56.69);
 
         try {

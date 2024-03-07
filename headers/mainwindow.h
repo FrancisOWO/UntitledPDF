@@ -73,6 +73,7 @@ private slots:
 
     void PoDoFoDemo(int choice);
 
+    void setEditablePageSize(double width, double height);
     void loadEditablePDF();
 
     // File Menu
@@ -108,8 +109,6 @@ private:
 
     static const int DEMO_HELLOWORLD = 0;
     static const int DEMO_BASE14FONTS = 1;
-
-    int Pt2Px(double pt);
 };
 
 #endif // MAINWINDOW_H

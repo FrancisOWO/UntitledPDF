@@ -55,7 +55,7 @@
 #include <QTextDocument>
 #include <QTextCharFormat>
 #include <QFont>
-#include <QScrollBar>
+#include <QLayout>
 
 #include <QDir>
 #include <QDebug>
@@ -112,10 +112,10 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-int MainWindow::Pt2Px(double pt)
+static int Pt2Px(double pt, QWidget* widget, int choice)
 {
-    // default dpi: 96
-    double dpi = this->screen()->logicalDotsPerInch();
+    int dpi = (choice == 0 ? widget->logicalDpiX(): widget->logicalDpiY());
+    qDebug() << "dpi:" << dpi << (choice == 0 ? "X" : "Y");
     return pt/72*dpi;
 }
 
@@ -151,6 +151,14 @@ void MainWindow::PoDoFoDemo(int choice)
     }
 }
 
+void MainWindow::setEditablePageSize(double width, double height)
+{
+    // 设置页面大小，水平居中
+    ui->pdfPage->setFixedSize(::Pt2Px(width, ui->pdfPage, 0), ::Pt2Px(height, ui->pdfPage, 1));
+    QVBoxLayout layout;
+    layout.setAlignment(ui->pdfPage, Qt::AlignHCenter);
+}
+
 void MainWindow::loadEditablePDF()
 {
     qDebug() << "loadEditablePDF() >> dpi:" << this->screen()->logicalDotsPerInch();
@@ -170,6 +178,12 @@ void MainWindow::loadEditablePDF()
             // TODO: 目前编辑状态只显示第一页，未实现页面切换
             // pageIndex = pageNumber - 1
             auto& page = document.GetPages().GetPageAt(m_pageSelector->getPageNumber()-1);
+
+            // TrimBox 定义了页面最终的尺寸
+            auto&& trimBox = page.GetTrimBox();
+            double width = trimBox.GetRight()-trimBox.GetLeft();
+            double height = trimBox.GetTop()-trimBox.GetBottom();
+            setEditablePageSize(width, height);
 
             // 提取文本内容和位置
             std::vector<PdfTextEntry> entries;
@@ -195,7 +209,7 @@ void MainWindow::loadEditablePDF()
                          << "fontSize:" << currentState.fontSize;
 
                 QTextEdit *textEdit = new QTextEdit();
-                textEdit->setParent(ui->pdfEditor);
+                textEdit->setParent(ui->pdfPage);
 
                 // 设置字体格式
                 QFont::StyleHint fontHint = QFont::System;
@@ -212,12 +226,21 @@ void MainWindow::loadEditablePDF()
                 textEdit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
                 textEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-                // 转换成像素位置，显示在编辑区域
-                // TODO: Pt2Px 计算的位置不够准确
-                QFontMetrics fm(textEdit->currentFont());
-                int x = Pt2Px(entry.X), y = Pt2Px(page.GetRect().Height-entry.Y);
+                currentFont = textEdit->currentFont();
+
+                // 文本位置坐标转换成像素位置，在编辑区域生成可编辑的文本框
+                // 1. 计算宽高，需测量当前字体字符的宽高
+                QFontMetrics fm(currentFont);
                 int width = fm.horizontalAdvance(entry.Text.data()), height = fm.height();
                 const int horizontalMargin = 15, verticalMargin = 12;
+
+                // 2. 计算左上角坐标
+                // BUG: 编辑模式显示的文本位置比正常位置偏下
+                // FIX: 文本 entry.Y 是左下角的 Y，需加上字体高度才能得到左上角的 Y
+                auto&& trimBox = page.GetTrimBox();
+                int x = ::Pt2Px(entry.X-trimBox.GetLeft(), ui->pdfPage, 0);
+                int y = ::Pt2Px(trimBox.GetTop()-entry.Y, ui->pdfPage, 1) - height;
+
                 textEdit->setGeometry({x, y, width+horizontalMargin, height+verticalMargin});
                 qDebug() << "Rect:" << x << "," << y << "," << width << "," << height;
 
