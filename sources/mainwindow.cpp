@@ -193,6 +193,8 @@ void MainWindow::loadEditablePDF()
             std::vector<UPdfTextState> textStates;
             UPdfExtractTextStates(page, textStates);
 
+            qDebug() << "entries:" << entries.size() << ", states:" << textStates.size();
+
             for (int i=0; i<entries.size(); i++) {
                 auto& entry = entries[i];
                 auto& currentState = textStates[i];

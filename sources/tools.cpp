@@ -205,8 +205,13 @@ void UPdfExtractTextStates(PdfPage& page, vector<UPdfTextState>& textStates)
                         break;
                     }
                     case PdfOperator::Quote:
-                    case PdfOperator::DoubleQuote:
-                    case PdfOperator::TJ:
+                    case PdfOperator::DoubleQuote:{
+                        break;
+                    }
+                    case PdfOperator::TJ: {
+                        textStates.push_back(currentState);
+                        break;
+                    }
                     case PdfOperator::Tc:
                     case PdfOperator::Tw:
                     case PdfOperator::q:
