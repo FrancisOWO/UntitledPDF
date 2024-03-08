@@ -202,9 +202,13 @@ void MainWindow::loadEditablePDF()
                                      QString::number(entry.Length), entry.Text.data());
 
                 // e.g. baseFontName: "Times", fontName: "Times-BoldItalic"
-                QString baseFontName = currentState.font->GetMetrics().GetBaseFontName().data();
-                QString fontName = currentState.font->GetMetrics().GetFontName().data();
+                qDebug() << currentState.font;
 
+                QString baseFontName, fontName;
+                if (currentState.font != nullptr) {
+                    baseFontName = currentState.font->GetMetrics().GetBaseFontName().data();
+                    fontName = currentState.font->GetMetrics().GetFontName().data();
+                }
                 qDebug() << "baseFontName:" << baseFontName << "fontName:" << fontName
                          << "fontSize:" << currentState.fontSize;
 
